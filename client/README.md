@@ -147,8 +147,4 @@ PORT=5000
 
 Mukesh Pola
 
----
 
-# GitHub Repository
-
-Add your GitHub repository link here after deployment.
