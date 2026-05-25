@@ -1,17 +1,43 @@
 # 🎓 Smart Campus Analytics Dashboard
 
-A full-stack MERN application built for managing and analyzing student attendance data with authentication, analytics dashboards, charts, CRUD operations, and modern UI features.
+A full-stack MERN application built for managing and analyzing student attendance data with authentication, analytics dashboards, charts, PDF export, CRUD operations, and modern UI features.
 
 ---
 
-# 🚀 Live Features
+# 🚀 Project Overview
+
+Smart Campus Analytics is a modern student management and attendance analytics platform designed to help institutions efficiently manage student records, attendance tracking, and dashboard analytics.
+
+The project includes secure authentication, interactive analytics charts, attendance monitoring, PDF export functionality, dark mode support, and a responsive user interface.
+
+---
+
+# ✨ Features
 
 ## 🔐 Authentication System
+- Student Login
+- Admin Login
+- User Registration
 - JWT Authentication
-- Login & Registration
 - Protected Dashboard Access
-- Token Storage using LocalStorage
+- Secure Token Storage
 - Logout Functionality
+
+---
+
+# 👨‍🎓 Student Management System
+
+## CRUD Operations
+- Add Student
+- Edit Student
+- Delete Student
+- View Student Records
+
+## Student Details
+- Student Name
+- Roll Number
+- Department
+- Attendance Percentage
 
 ---
 
@@ -21,42 +47,46 @@ A full-stack MERN application built for managing and analyzing student attendanc
 - Total Students
 - Average Attendance
 - Department-wise Student Count
-- Dynamic Analytics Cards
+- Top Performer
+- Low Attendance Students
 
-## Data Visualization
-- 📈 Bar Charts
-- 🥧 Pie Charts
-- Attendance Analytics
-- Department Distribution
+---
+
+# 📈 Data Visualization
+
+## Charts Included
+- Attendance Analytics Bar Chart
+- Department Distribution Pie Chart
 
 Built using:
 - Recharts Library
 
 ---
 
-# 👨‍🎓 Student Management Features
+# 📄 PDF Export Feature
 
-## CRUD Operations
-- Add Student
-- Update Student
-- Delete Student
-- View Student Details
-
-## Search & Filter
-- Search Students by Name
-- Filter by Department
-- Real-time Filtering
+- Export student records as PDF
+- Download attendance reports
+- Generate printable analytics data
 
 ---
 
-# 🌙 UI/UX Features
+# 🔍 Search & Filter Features
+
+- Search students by name
+- Filter by department
+- Real-time filtering system
+
+---
+
+# 🌙 UI / UX Features
 
 - Dark Mode / Light Mode
-- Responsive Design
-- Modern Dashboard UI
-- Tailwind CSS Styling
-- Clean Card Layout
-- Mobile-Friendly Interface
+- Fully Responsive Design
+- Modern Dashboard Interface
+- Professional Card Layout
+- Mobile-Friendly UI
+- Smooth User Experience
 
 ---
 
@@ -79,6 +109,10 @@ Built using:
 - JWT (jsonwebtoken)
 - bcryptjs
 
+## Additional Libraries
+- jsPDF
+- html2canvas
+
 ---
 
 # 📂 Project Structure
@@ -97,6 +131,8 @@ SmartCampus-Analytics/
 │   ├── routes/
 │   ├── server.js
 │   └── .env
+│
+├── screenshots/
 │
 └── README.md
 ```
@@ -131,9 +167,9 @@ npm install
 
 ---
 
-# ▶️ Run Project
+# ▶️ Run the Project
 
-## Start Backend
+## Start Backend Server
 
 ```bash
 cd backend
@@ -168,7 +204,7 @@ http://localhost:5173
 Create a `.env` file inside backend folder.
 
 ```env
-MONGO_URI=your_mongodb_connection
+MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
 PORT=5000
 ```
@@ -177,24 +213,51 @@ PORT=5000
 
 # 📸 Project Screenshots
 
-## Login & Register System
-- Secure authentication UI
+## 🔐 Login & Register System
 
-## Dashboard Analytics
-- Student analytics dashboard
-- Attendance charts
-- Department distribution
-
-## Student Management
-- Add/Edit/Delete students
-- Search & filter functionality
+![Login Register](screenshots/login-register.png)
 
 ---
 
-# 🔥 Upcoming Features
+## 📊 Dashboard Overview
 
-- Daily Attendance System
-- PDF Report Export
+![Dashboard](screenshots/dashboard.png)
+
+---
+
+## ➕ Add Student Module
+
+![Add Student](screenshots/add-student.png)
+
+---
+
+## 📈 Attendance Analytics
+
+![Attendance Analytics](screenshots/attendance-analytics.png)
+
+---
+
+## 🥧 Department Distribution
+
+![Department Distribution](screenshots/department-distribution.png)
+
+---
+
+## 👨‍🎓 Student Records
+
+![Student Records](screenshots/student-records.png)
+
+---
+
+## 📄 PDF Export Feature
+
+![Export PDF](screenshots/export-pdf.png)
+
+---
+
+# 🔥 Future Enhancements
+
+- Daily Attendance Tracking
 - Student Profile Photos
 - Role-Based Access Control
 - MongoDB Atlas Deployment
@@ -202,6 +265,7 @@ PORT=5000
 - Advanced Analytics
 - Pagination
 - Loading Animations
+- Admin Dashboard Controls
 
 ---
 
@@ -215,8 +279,10 @@ This project helped in learning:
 - MongoDB Database Handling
 - React State Management
 - Data Visualization
-- Dashboard Design
-- Responsive UI Development
+- Dashboard UI Design
+- Responsive Web Development
+- JWT Security Implementation
+- PDF Generation
 
 ---
 
