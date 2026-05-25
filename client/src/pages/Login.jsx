@@ -1,26 +1,34 @@
 import { useState } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function Login() {
-
-  const navigate = useNavigate();
 
   const [isLogin, setIsLogin] =
     useState(true);
 
   const [formData, setFormData] =
     useState({
+
       name: "",
+
       email: "",
+
       password: "",
+
+      role: "student",
+
     });
 
   const handleChange = (e) => {
 
     setFormData({
+
       ...formData,
-      [e.target.name]: e.target.value,
+
+      [e.target.name]:
+        e.target.value,
+
     });
 
   };
@@ -29,47 +37,86 @@ function Login() {
 
     e.preventDefault();
 
-    const url = isLogin
-      ? "http://localhost:5000/auth/login"
-      : "http://localhost:5000/auth/register";
+    try {
 
-    const res = await fetch(url, {
-      method: "POST",
+      const endpoint =
+        isLogin
+          ? "login"
+          : "register";
 
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
+      const res = await fetch(
 
-      body: JSON.stringify(formData),
-    });
+        `http://localhost:5000/auth/${endpoint}`,
 
-    const data = await res.json();
+        {
 
-    if (isLogin) {
+          method: "POST",
 
-      if (data.token) {
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(
+            formData
+          ),
+
+        }
+      );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        toast.error(
+          data.message
+        );
+
+        return;
+
+      }
+
+      // LOGIN
+      if (isLogin) {
 
         localStorage.setItem(
           "token",
           data.token
         );
 
-        alert("Login Successful");
+        localStorage.setItem(
+          "role",
+          data.role
+        );
 
-        navigate("/");
+        localStorage.setItem(
+          "name",
+          data.name
+        );
+
+        toast.success(
+          "Login Successful"
+        );
+
+        window.location.href =
+          "/";
 
       } else {
 
-        alert(data.message);
+        toast.success(
+          "Registration Successful"
+        );
+
+        setIsLogin(true);
 
       }
 
-    } else {
+    } catch (error) {
 
-      alert(data.message);
-
-      setIsLogin(true);
+      toast.error(
+        "Something went wrong"
+      );
 
     }
 
@@ -77,11 +124,11 @@ function Login() {
 
   return (
 
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
+    <div className="min-h-screen flex justify-center items-center bg-gray-900">
 
-      <div className="bg-white p-8 rounded-xl shadow-md w-96">
+      <div className="bg-white p-10 rounded-xl shadow-xl w-[400px]">
 
-        <h1 className="text-3xl font-bold mb-6 text-center">
+        <h1 className="text-3xl font-bold text-center mb-8">
 
           {isLogin
             ? "Login"
@@ -103,6 +150,7 @@ function Login() {
               value={formData.name}
               onChange={handleChange}
               className="w-full border p-3 rounded-lg"
+              required
             />
 
           )}
@@ -114,6 +162,7 @@ function Login() {
             value={formData.email}
             onChange={handleChange}
             className="w-full border p-3 rounded-lg"
+            required
           />
 
           <input
@@ -123,11 +172,33 @@ function Login() {
             value={formData.password}
             onChange={handleChange}
             className="w-full border p-3 rounded-lg"
+            required
           />
+
+          {!isLogin && (
+
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full border p-3 rounded-lg"
+            >
+
+              <option value="student">
+                Student
+              </option>
+
+              <option value="admin">
+                Admin
+              </option>
+
+            </select>
+
+          )}
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
           >
 
             {isLogin
@@ -138,7 +209,7 @@ function Login() {
 
         </form>
 
-        <p className="text-center mt-4">
+        <p className="text-center mt-6">
 
           {isLogin
             ? "Don't have an account?"
@@ -164,6 +235,7 @@ function Login() {
     </div>
 
   );
+
 }
 
 export default Login;

@@ -6,7 +6,12 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
+
+import { ToastContainer } from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
 
 import "./index.css";
 
@@ -14,7 +19,15 @@ import App from "./App";
 
 import Login from "./pages/Login";
 
-import Register from "./pages/Register";
+function ProtectedRoute({ children }) {
+
+  const token =
+    localStorage.getItem("token");
+
+  return token
+    ? children
+    : <Navigate to="/login" />;
+}
 
 ReactDOM.createRoot(
   document.getElementById("root")
@@ -23,12 +36,9 @@ ReactDOM.createRoot(
 
     <BrowserRouter>
 
-      <Routes>
+      <ToastContainer />
 
-        <Route
-          path="/"
-          element={<App />}
-        />
+      <Routes>
 
         <Route
           path="/login"
@@ -36,8 +46,12 @@ ReactDOM.createRoot(
         />
 
         <Route
-          path="/register"
-          element={<Register />}
+          path="/"
+          element={
+            <ProtectedRoute>
+              <App />
+            </ProtectedRoute>
+          }
         />
 
       </Routes>

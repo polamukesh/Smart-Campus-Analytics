@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 
+import { motion } from "framer-motion";
+
+import { toast } from "react-toastify";
+
+import jsPDF from "jspdf";
+
+import autoTable from "jspdf-autotable";
+
 import {
   BarChart,
   Bar,
@@ -13,7 +21,22 @@ import {
   Legend,
 } from "recharts";
 
+import {
+  FaUserGraduate,
+  FaChartBar,
+  FaMoon,
+  FaSun,
+  FaFilePdf,
+  FaSignOutAlt,
+} from "react-icons/fa";
+
 function App() {
+
+  const role =
+    localStorage.getItem("role");
+
+  const userName =
+    localStorage.getItem("name");
 
   const [students, setStudents] =
     useState([]);
@@ -43,18 +66,40 @@ function App() {
   // Fetch Students
   const fetchStudents = async () => {
 
-    const res = await fetch(
-      "http://localhost:5000/students"
-    );
+    try {
 
-    const data = await res.json();
+      const res = await fetch(
+        "http://localhost:5000/students"
+      );
 
-    setStudents(data);
+      const data = await res.json();
+
+      setStudents(data);
+
+    } catch (error) {
+
+      toast.error(
+        "Failed to fetch students"
+      );
+
+    }
 
   };
 
   useEffect(() => {
+
+    const token =
+      localStorage.getItem("token");
+
+    if (!token) {
+
+      window.location.href =
+        "/login";
+
+    }
+
     fetchStudents();
+
   }, []);
 
   // Handle Input
@@ -72,64 +117,96 @@ function App() {
 
     e.preventDefault();
 
-    if (editingId) {
+    try {
 
-      await fetch(
-        `http://localhost:5000/students/${editingId}`,
-        {
-          method: "PUT",
+      if (editingId) {
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+        await fetch(
+          `http://localhost:5000/students/${editingId}`,
+          {
+            method: "PUT",
 
-          body: JSON.stringify(formData),
-        }
-      );
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-      setEditingId(null);
+            body: JSON.stringify(formData),
+          }
+        );
 
-    } else {
+        toast.success(
+          "Student Updated Successfully"
+        );
 
-      await fetch(
-        "http://localhost:5000/students/add",
-        {
-          method: "POST",
+        setEditingId(null);
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+      } else {
 
-          body: JSON.stringify(formData),
-        }
+        await fetch(
+          "http://localhost:5000/students/add",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify(formData),
+          }
+        );
+
+        toast.success(
+          "Student Added Successfully"
+        );
+
+      }
+
+      setFormData({
+        name: "",
+        rollNo: "",
+        department: "",
+        attendance: "",
+      });
+
+      fetchStudents();
+
+    } catch (error) {
+
+      toast.error(
+        "Something went wrong"
       );
 
     }
-
-    setFormData({
-      name: "",
-      rollNo: "",
-      department: "",
-      attendance: "",
-    });
-
-    fetchStudents();
 
   };
 
   // Delete Student
   const deleteStudent = async (id) => {
 
-    await fetch(
-      `http://localhost:5000/students/${id}`,
-      {
-        method: "DELETE",
-      }
-    );
+    try {
 
-    fetchStudents();
+      await fetch(
+        `http://localhost:5000/students/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      toast.error(
+        "Student Deleted"
+      );
+
+      fetchStudents();
+
+    } catch (error) {
+
+      toast.error(
+        "Delete failed"
+      );
+
+    }
 
   };
 
@@ -144,6 +221,58 @@ function App() {
     });
 
     setEditingId(student._id);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
+  };
+
+  // Export PDF
+  const exportPDF = () => {
+
+    const doc = new jsPDF();
+
+    doc.text(
+      "Smart Campus Analytics Report",
+      14,
+      15
+    );
+
+    autoTable(doc, {
+
+      startY: 25,
+
+      head: [[
+        "Name",
+        "Roll No",
+        "Department",
+        "Attendance",
+      ]],
+
+      body: students.map(
+        (student) => [
+
+          student.name,
+
+          student.rollNo,
+
+          student.department,
+
+          `${student.attendance}%`,
+        ]
+      ),
+
+    });
+
+    doc.save(
+      "student-report.pdf"
+    );
+
+    toast.success(
+      "PDF Downloaded Successfully"
+    );
 
   };
 
@@ -192,6 +321,24 @@ function App() {
         student.department
           .toUpperCase() === "CSE"
     ).length;
+
+  // Top Performer
+  const topPerformer =
+    students.length > 0
+      ? students.reduce((prev, current) =>
+          Number(prev.attendance) >
+          Number(current.attendance)
+            ? prev
+            : current
+        )
+      : null;
+
+  // Low Attendance
+  const lowAttendanceStudents =
+    students.filter(
+      (student) =>
+        Number(student.attendance) < 60
+    );
 
   // Pie Chart Data
   const pieData = [
@@ -246,49 +393,133 @@ function App() {
     <div
       className={
         darkMode
-          ? "min-h-screen bg-gray-900 text-white p-6"
-          : "min-h-screen bg-gray-100 p-6"
+          ? "min-h-screen flex bg-gray-900 text-white"
+          : "min-h-screen flex bg-gray-100 text-black"
       }
     >
 
-      <div className="max-w-7xl mx-auto">
+      {/* Sidebar */}
+      <motion.div
+        initial={{
+          x: -100,
+          opacity: 0,
+        }}
+        animate={{
+          x: 0,
+          opacity: 1,
+        }}
+        transition={{
+          duration: 0.5,
+        }}
+        className="w-72 bg-black text-white p-6 flex flex-col justify-between"
+      >
 
-        {/* Top Buttons */}
-        <div className="flex justify-between mb-6">
+        <div>
+
+          <h1 className="text-3xl font-bold mb-6 text-center">
+            Smart Campus
+          </h1>
+
+          <div className="bg-gray-800 p-4 rounded-xl mb-10 text-center">
+
+            <p className="text-lg font-semibold">
+              Welcome
+            </p>
+
+            <p className="text-blue-400 font-bold">
+              {userName}
+            </p>
+
+            <p className="text-sm mt-2 uppercase">
+              {role}
+            </p>
+
+          </div>
+
+          <div className="space-y-6">
+
+            <div className="flex items-center gap-3 text-lg hover:text-blue-400 transition">
+              <FaChartBar />
+              Dashboard
+            </div>
+
+            <div className="flex items-center gap-3 text-lg hover:text-blue-400 transition">
+              <FaUserGraduate />
+              Students
+            </div>
+
+            <button
+              onClick={exportPDF}
+              className="flex items-center gap-3 text-lg hover:text-green-400 transition"
+            >
+              <FaFilePdf />
+              Export PDF
+            </button>
+
+          </div>
+
+        </div>
+
+        <div className="space-y-4">
 
           <button
             onClick={() =>
               setDarkMode(!darkMode)
             }
-            className="bg-black text-white px-4 py-2 rounded-lg"
+            className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg w-full hover:scale-105 transition"
           >
+
+            {darkMode
+              ? <FaSun />
+              : <FaMoon />}
+
             {darkMode
               ? "Light Mode"
               : "Dark Mode"}
+
           </button>
 
           <button
             onClick={() => {
 
-              localStorage.removeItem(
-                "token"
-              );
+              localStorage.clear();
 
               window.location.href =
                 "/login";
 
             }}
-            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+            className="flex items-center gap-3 bg-red-600 px-4 py-3 rounded-lg w-full hover:scale-105 transition"
           >
+
+            <FaSignOutAlt />
+
             Logout
+
           </button>
 
         </div>
 
-        {/* Heading */}
-        <h1 className="text-4xl font-bold text-center text-red-600 mb-8">
-          Smart Campus Analytics
-        </h1>
+      </motion.div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-8 overflow-auto">
+
+        <motion.h1
+          initial={{
+            y: -50,
+            opacity: 0,
+          }}
+          animate={{
+            y: 0,
+            opacity: 1,
+          }}
+          transition={{
+            duration: 0.5,
+          }}
+          className="text-4xl font-bold mb-8 text-red-600"
+        >
+          Dashboard Analytics
+        </motion.h1>
 
         {/* Search & Filter */}
         <div className="bg-white text-black p-6 rounded-xl shadow-md mb-10 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -340,121 +571,245 @@ function App() {
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
-          <div className="bg-white text-black p-6 rounded-xl shadow-md">
+          <motion.div
+            whileHover={{
+              scale: 1.05,
+            }}
+            className="bg-white text-black p-6 rounded-xl shadow-md"
+          >
 
-            <h2 className="text-xl font-semibold mb-2">
+            <h2 className="text-xl font-semibold">
               Total Students
             </h2>
 
-            <p className="text-3xl font-bold text-blue-600">
+            <p className="text-3xl font-bold text-blue-600 mt-3">
               {totalStudents}
             </p>
 
-          </div>
+          </motion.div>
 
-          <div className="bg-white text-black p-6 rounded-xl shadow-md">
+          <motion.div
+            whileHover={{
+              scale: 1.05,
+            }}
+            className="bg-white text-black p-6 rounded-xl shadow-md"
+          >
 
-            <h2 className="text-xl font-semibold mb-2">
+            <h2 className="text-xl font-semibold">
               Average Attendance
             </h2>
 
-            <p className="text-3xl font-bold text-green-600">
+            <p className="text-3xl font-bold text-green-600 mt-3">
               {averageAttendance}%
             </p>
 
-          </div>
+          </motion.div>
 
-          <div className="bg-white text-black p-6 rounded-xl shadow-md">
+          <motion.div
+            whileHover={{
+              scale: 1.05,
+            }}
+            className="bg-white text-black p-6 rounded-xl shadow-md"
+          >
 
-            <h2 className="text-xl font-semibold mb-2">
+            <h2 className="text-xl font-semibold">
               CSE Students
             </h2>
 
-            <p className="text-3xl font-bold text-purple-600">
+            <p className="text-3xl font-bold text-purple-600 mt-3">
               {cseStudents}
             </p>
 
-          </div>
+          </motion.div>
 
         </div>
 
-        {/* Form */}
-        <div className="bg-white text-black p-6 rounded-xl shadow-md mb-10">
+        {/* Smart Insights */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
 
-          <h2 className="text-2xl font-semibold mb-6">
-
-            {editingId
-              ? "Update Student"
-              : "Add Student"}
-
-          </h2>
-
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          {/* Top Performer */}
+          <motion.div
+            whileHover={{
+              scale: 1.03,
+            }}
+            className="bg-gradient-to-r from-green-500 to-green-700 text-white p-6 rounded-xl shadow-lg"
           >
 
-            <input
-              type="text"
-              name="name"
-              placeholder="Name"
-              value={formData.name}
-              onChange={handleChange}
-              className="border p-3 rounded-lg"
-            />
+            <h2 className="text-2xl font-bold mb-4">
+              🏆 Top Performer
+            </h2>
 
-            <input
-              type="text"
-              name="rollNo"
-              placeholder="Roll No"
-              value={formData.rollNo}
-              onChange={handleChange}
-              className="border p-3 rounded-lg"
-            />
+            {topPerformer ? (
 
-            <input
-              type="text"
-              name="department"
-              placeholder="Department"
-              value={formData.department}
-              onChange={handleChange}
-              className="border p-3 rounded-lg"
-            />
+              <div>
 
-            <input
-              type="number"
-              name="attendance"
-              placeholder="Attendance"
-              value={formData.attendance}
-              onChange={handleChange}
-              className="border p-3 rounded-lg"
-            />
+                <p>
+                  <strong>Name:</strong>{" "}
+                  {topPerformer.name}
+                </p>
 
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-3 rounded-lg"
-            >
+                <p>
+                  <strong>Department:</strong>{" "}
+                  {topPerformer.department}
+                </p>
+
+                <p>
+                  <strong>Attendance:</strong>{" "}
+                  {topPerformer.attendance}%
+                </p>
+
+              </div>
+
+            ) : (
+
+              <p>No students available</p>
+
+            )}
+
+          </motion.div>
+
+          {/* Low Attendance */}
+          <motion.div
+            whileHover={{
+              scale: 1.03,
+            }}
+            className="bg-gradient-to-r from-red-500 to-red-700 text-white p-6 rounded-xl shadow-lg"
+          >
+
+            <h2 className="text-2xl font-bold mb-4">
+              ⚠ Low Attendance
+            </h2>
+
+            {lowAttendanceStudents.length > 0 ? (
+
+              lowAttendanceStudents.map(
+                (student) => (
+
+                  <div
+                    key={student._id}
+                    className="mb-4 pb-3"
+                  >
+
+                    <p>
+                      <strong>Name:</strong>{" "}
+                      {student.name}
+                    </p>
+
+                    <p>
+                      <strong>Department:</strong>{" "}
+                      {student.department}
+                    </p>
+
+                    <p>
+                      <strong>Attendance:</strong>{" "}
+                      {student.attendance}%
+                    </p>
+
+                  </div>
+
+                )
+              )
+
+            ) : (
+
+              <p>
+                No low attendance students
+              </p>
+
+            )}
+
+          </motion.div>
+
+        </div>
+
+        {/* Admin Only Add Student */}
+        {role === "admin" && (
+
+          <div className="bg-white text-black p-6 rounded-xl shadow-md mb-10">
+
+            <h2 className="text-2xl font-semibold mb-6">
 
               {editingId
                 ? "Update Student"
                 : "Add Student"}
 
-            </button>
+            </h2>
 
-          </form>
+            <form
+              onSubmit={handleSubmit}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
 
-        </div>
+              <input
+                type="text"
+                name="name"
+                placeholder="Name"
+                value={formData.name}
+                onChange={handleChange}
+                className="border p-3 rounded-lg"
+                required
+              />
 
-        {/* Bar Chart */}
-        <div className="bg-white text-black p-6 rounded-xl shadow-md mb-10">
+              <input
+                type="text"
+                name="rollNo"
+                placeholder="Roll No"
+                value={formData.rollNo}
+                onChange={handleChange}
+                className="border p-3 rounded-lg"
+                required
+              />
 
-          <h2 className="text-2xl font-semibold mb-6">
-            Attendance Analytics
-          </h2>
+              <input
+                type="text"
+                name="department"
+                placeholder="Department"
+                value={formData.department}
+                onChange={handleChange}
+                className="border p-3 rounded-lg"
+                required
+              />
 
-          <div style={{ width: "100%", height: 300 }}>
+              <input
+                type="number"
+                name="attendance"
+                placeholder="Attendance"
+                value={formData.attendance}
+                onChange={handleChange}
+                className="border p-3 rounded-lg"
+                required
+              />
 
-            <ResponsiveContainer>
+              <button
+                type="submit"
+                className="bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+              >
+
+                {editingId
+                  ? "Update Student"
+                  : "Add Student"}
+
+              </button>
+
+            </form>
+
+          </div>
+
+        )}
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+
+          <div className="bg-white text-black p-6 rounded-xl shadow-md">
+
+            <h2 className="text-2xl font-semibold mb-6">
+              Attendance Analytics
+            </h2>
+
+            <ResponsiveContainer
+              width="100%"
+              height={300}
+            >
 
               <BarChart
                 data={filteredStudents}
@@ -477,43 +832,41 @@ function App() {
 
           </div>
 
-        </div>
+          <div className="bg-white text-black p-6 rounded-xl shadow-md">
 
-        {/* Pie Chart */}
-        <div className="bg-white text-black p-6 rounded-xl shadow-md mb-10">
+            <h2 className="text-2xl font-semibold mb-6">
+              Department Distribution
+            </h2>
 
-          <h2 className="text-2xl font-semibold mb-6">
-            Department Distribution
-          </h2>
-
-          <div style={{ width: "100%", height: 400 }}>
-
-            <ResponsiveContainer>
+            <ResponsiveContainer
+              width="100%"
+              height={300}
+            >
 
               <PieChart>
 
                 <Pie
                   data={pieData}
                   dataKey="value"
-                  nameKey="name"
-                  outerRadius={130}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
                   label
                 >
 
                   {pieData.map(
                     (entry, index) => (
 
-                    <Cell
-                      key={index}
-                      fill={
-                        COLORS[
-                          index %
-                          COLORS.length
-                        ]
-                      }
-                    />
+                      <Cell
+                        key={index}
+                        fill={
+                          COLORS[index %
+                            COLORS.length]
+                        }
+                      />
 
-                  ))}
+                    )
+                  )}
 
                 </Pie>
 
@@ -529,11 +882,11 @@ function App() {
 
         </div>
 
-        {/* Student List */}
-        <div>
+        {/* Student Records */}
+        <div className="bg-white text-black p-6 rounded-xl shadow-md">
 
           <h2 className="text-2xl font-semibold mb-6">
-            Student List
+            Student Records
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -541,56 +894,66 @@ function App() {
             {filteredStudents.map(
               (student) => (
 
-              <div
-                key={student._id}
-                className="bg-white text-black p-6 rounded-xl shadow-md"
-              >
+                <motion.div
+                  whileHover={{
+                    scale: 1.03,
+                  }}
+                  key={student._id}
+                  className="border p-5 rounded-xl shadow-sm"
+                >
 
-                <p className="mb-2">
-                  <strong>Name:</strong>{" "}
-                  {student.name}
-                </p>
+                  <p>
+                    <strong>Name:</strong>{" "}
+                    {student.name}
+                  </p>
 
-                <p className="mb-2">
-                  <strong>Roll No:</strong>{" "}
-                  {student.rollNo}
-                </p>
+                  <p>
+                    <strong>Roll No:</strong>{" "}
+                    {student.rollNo}
+                  </p>
 
-                <p className="mb-2">
-                  <strong>Department:</strong>{" "}
-                  {student.department}
-                </p>
+                  <p>
+                    <strong>Department:</strong>{" "}
+                    {student.department}
+                  </p>
 
-                <p className="mb-4">
-                  <strong>Attendance:</strong>{" "}
-                  {student.attendance}%
-                </p>
+                  <p>
+                    <strong>Attendance:</strong>{" "}
+                    {student.attendance}%
+                  </p>
 
-                <div className="flex gap-3">
+                  {role === "admin" && (
 
-                  <button
-                    onClick={() =>
-                      editStudent(student)
-                    }
-                    className="bg-yellow-500 text-white px-4 py-2 rounded-lg"
-                  >
-                    Edit
-                  </button>
+                    <div className="flex gap-4 mt-4">
 
-                  <button
-                    onClick={() =>
-                      deleteStudent(student._id)
-                    }
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg"
-                  >
-                    Delete
-                  </button>
+                      <button
+                        onClick={() =>
+                          editStudent(student)
+                        }
+                        className="bg-yellow-500 text-white px-4 py-2 rounded-lg"
+                      >
+                        Edit
+                      </button>
 
-                </div>
+                      <button
+                        onClick={() =>
+                          deleteStudent(
+                            student._id
+                          )
+                        }
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg"
+                      >
+                        Delete
+                      </button>
 
-              </div>
+                    </div>
 
-            ))}
+                  )}
+
+                </motion.div>
+
+              )
+            )}
 
           </div>
 
